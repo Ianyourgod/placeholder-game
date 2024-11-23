@@ -10,10 +10,19 @@ public class Movement : MonoBehaviour
     [SerializeField] private Rigidbody2D rigid_body;
     [SerializeField] private LayerMask ground_layer;
     [SerializeField] private LayerMask player_layer;
+    [SerializeField] private Animator animator;
+
+    [SerializeField] private bool is_evil = false;
+    private string animation_name;
+
+    private float animation_cooldown = 0.0f;
 
     private bool is_jumping = false;
 
-    // Start is called before the first frame update
+    void Awake() {
+        animation_name = is_evil ? "Bad" : "Good";
+    }
+
     void Start()
     {
 
@@ -34,11 +43,34 @@ public class Movement : MonoBehaviour
     {
         float horizontal = Input.GetAxis("Horizontal");
 
+        AnimatorClipInfo clip = animator.GetCurrentAnimatorClipInfo(0)[0];
+
+        if (Time.time > animation_cooldown && clip.clip.name != $"{animation_name}PlayerIdle") {
+            animator.Play($"{animation_name}PlayerIdle");
+        }
+
         if (Input.GetButtonDown("Vertical")) {
             is_jumping = true;
+            // play jump animation
+            animator.Play($"{animation_name}PlayerJump");
+            animation_cooldown = Time.time + 0.35f; // 0.35 seconds
         }
 
         rigid_body.velocity = new Vector2(horizontal * speed, rigid_body.velocity.y);
+
+        if (horizontal != 0) {
+            if (clip.clip.name != $"{animation_name}PlayerRun" && Time.time > animation_cooldown) {
+                animator.Play($"{animation_name}PlayerRun");
+                animation_cooldown = Time.time + 0.5f; // 0.1 seconds
+            }
+        }
+
+        if (horizontal < 0) {
+            transform.localScale = new Vector3(-1, 1, 1);
+        } else if (horizontal > 0) {
+            transform.localScale = new Vector3(1, 1, 1);
+        }
+
         if (is_jumping && touching_ground()) {
             rigid_body.AddForce(new Vector2(0f, jump_force));
             is_jumping = false;
@@ -58,7 +90,7 @@ public class Movement : MonoBehaviour
 
     bool touching_enemy() {
         // check circle
-        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, 0.5f, player_layer);
+        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, 0.25f, player_layer);
         return hits.Length > 1;
     }
 }
