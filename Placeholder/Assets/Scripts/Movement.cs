@@ -10,6 +10,7 @@ public class Movement : MonoBehaviour
     [SerializeField] private Rigidbody2D rigid_body;
     [SerializeField] private LayerMask ground_layer;
     [SerializeField] private LayerMask player_layer;
+    [SerializeField] private LayerMask box_layer;
     [SerializeField] private Animator animator;
 
     [SerializeField] private bool is_evil = false;
@@ -59,6 +60,12 @@ public class Movement : MonoBehaviour
         rigid_body.velocity = new Vector2(horizontal * speed, rigid_body.velocity.y);
 
         if (horizontal != 0) {
+            (bool ahead, Collider2D box) = box_ahead(new Vector2(three_ops(horizontal), 0));
+            if (ahead) {
+                box.transform.position = new Vector3(box.transform.position.x + horizontal * speed, box.transform.position.y, box.transform.position.z);
+                // set box velocity to 0
+            }
+
             if (clip.clip.name != $"{animation_name}PlayerRun" && Time.time > animation_cooldown) {
                 animator.Play($"{animation_name}PlayerRun");
                 animation_cooldown = Time.time + 0.5f; // 0.1 seconds
@@ -92,5 +99,12 @@ public class Movement : MonoBehaviour
         // check circle
         Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, 0.25f, player_layer);
         return hits.Length > 1;
+    }
+
+    (bool, Collider2D) box_ahead(Vector2 direction) {
+        // check circle
+        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position + new Vector3(direction.x, direction.y, 0), 0.25f, box_layer);
+        bool ahead = hits.Length > 0;
+        return (ahead, ahead ? hits[0] : null);
     }
 }
