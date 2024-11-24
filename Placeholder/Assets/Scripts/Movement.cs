@@ -13,7 +13,7 @@ public class Movement : MonoBehaviour
     [SerializeField] private LayerMask box_layer;
     [SerializeField] private Animator animator;
 
-    [SerializeField] private bool is_evil = false;
+    [SerializeField] public bool is_evil = false;
     private string animation_name;
 
     private float animation_cooldown = 0.0f;
